@@ -1371,11 +1371,12 @@ function renderDash() {
   // Low-stock important card
   let lowCard = g('low-stock-card');
   if (!lowCard) {
+    const dashTwo = document.querySelector('.dash-two');
+    if (!dashTwo) return; // DOM ยังไม่พร้อม ออกก่อน
     lowCard = document.createElement('div');
     lowCard.id = 'low-stock-card';
     lowCard.className = 'card';
     // insert before the 2-col dash-two div
-    const dashTwo = document.querySelector('.dash-two');
     dashTwo.parentNode.insertBefore(lowCard, dashTwo);
   }
   if (!lowImportant.length) {
@@ -1597,7 +1598,6 @@ function renderUsage() {
 }
 
 
-const _renderSearch = debounce(_doRenderSearch, 250);
 function renderSearchResult() {
   const query = (v('dash-search') || '').toLowerCase().trim();
   const el = g('dash-search-result');
@@ -1631,9 +1631,12 @@ function renderSearchResult() {
           <span style="font-size:15px;font-weight:600;color:var(--text1)">${it.name}</span>
           <span style="font-size:12px;color:var(--text3);margin-left:6px;">(${it.unit})</span>
         </div>
-        <div style="text-align:right;">
-          <div style="font-size:11px;color:var(--text3);">รวมทั้งหมด</div>
-          <div style="font-size:22px;font-weight:700;color:var(--text1);line-height:1.1">${grand} <span style="font-size:13px;font-weight:400;">${it.unit}</span></div>
+        <div style="text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+          <div>
+            <div style="font-size:11px;color:var(--text3);">รวมทั้งหมด</div>
+            <div style="font-size:22px;font-weight:700;color:var(--text1);line-height:1.1">${grand} <span style="font-size:13px;font-weight:400;">${it.unit}</span></div>
+          </div>
+          ${it.price != null && it.price !== '' && it.price !== 0 ? `<div style="font-size:13px;color:var(--yellow);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.25);padding:3px 10px;border-radius:6px;">💰 ${Number(it.price).toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2})} บาท</div>` : ''}
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -1994,7 +1997,7 @@ function _init() {
   // search input handled via oninput in HTML
   if (IS_CONNECTED) {
     _lastApiCall = Date.now();
-    apiGet();
+    apiGet().then(() => { renderDash(); renderSearchResult(); });
   } else {
     S = {
       items: [
@@ -2056,6 +2059,7 @@ function _init() {
     };
     applyState(S);
     loadConSrc(); loadRetItems();
+    setTimeout(() => { renderDash(); renderSearchResult(); }, 0); // render หลัง applyState เสร็จ
   }
 }
 
